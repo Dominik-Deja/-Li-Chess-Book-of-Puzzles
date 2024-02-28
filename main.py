@@ -5,7 +5,7 @@ import chess
 def load_puzzles(path=None):
     return pd.read_table(path, compression='zstd', header=0, sep=',')
 
-def filter_puzzles(data, themes=None, all_themes=True, min_rating=None, max_rating=None):
+def filter_puzzles(data, themes=None, all_themes=True, min_rating=None, max_rating=None, n=None):
     """Filter puzzles based on themes and rating range."""
     # Convert Rating column to numeric
     data["Rating"] = pd.to_numeric(data["Rating"], errors='coerce')
@@ -13,7 +13,6 @@ def filter_puzzles(data, themes=None, all_themes=True, min_rating=None, max_rati
     if themes:
         # Initialize the filter mask to select all rows initially
         filter_mask = pd.Series(True, index=data.index)
-        # AND/OR criterion
         if all_themes:
             for theme in themes.split(' '):
                 # Update the filter mask to only select rows where the theme is present
@@ -39,7 +38,10 @@ def filter_puzzles(data, themes=None, all_themes=True, min_rating=None, max_rati
             data.at[idx, 'Moves'] = ' '.join(moves[1:])
         else:
             print(f"Skipping row {idx + 1}: Insufficient moves")
-    return data
+    if data.shape[0] <= n:
+        return data
+    else:
+        return data.iloc[:n, :]
 
 def translate_moves(moves, fen):
     board = chess.Board(fen)
@@ -57,7 +59,7 @@ def black_or_white(fen, answer=True):
     else:
         return f"" if chess.Board(fen).turn else f"... "
 
-def generate_text(puzzles, themes, min_rating, max_rating):
+def generate_text(puzzles, themes, n, min_rating, max_rating):
     text = f"""
 \\documentclass{{article}}
 \\usepackage{{skak}}
@@ -74,7 +76,7 @@ def generate_text(puzzles, themes, min_rating, max_rating):
 
 \\begin{{document}}
 
-{{\\centering \\section*{{The Lichess Book of {themes} puzzles from {min_rating} to {max_rating}}}}}
+{{\\centering \\section*{{The Lichess Book of {n} Puzzles covering {themes} theme(s) from {min_rating} to {max_rating}}}}}
 
 \\vspace{{1cm}}
     """
@@ -138,12 +140,16 @@ def main():
     min_rating = config.get("min_rating")
     max_rating = config.get("max_rating")
     themes = config.get("themes")
+    all_themes = config.get("all_themes")
+    n = config.get("n")
     # Load data
     puzzles = load_puzzles('data/lichess_db_puzzle.csv.zst')
+    print(puzzles.shape)
     # Filter puzzles
-    filtered_puzzles = filter_puzzles(puzzles, themes=themes, min_rating=min_rating, max_rating=max_rating)
-    print(filtered_puzzles)
-    print(f"Data len: {len(filtered_puzzles)}")
+    filtered_puzzles = filter_puzzles(puzzles, themes=themes, all_themes=all_themes, min_rating=min_rating, max_rating=max_rating, n=n)
+    print(filtered_puzzles.shape)
+    with open('output.txt', 'w', encoding='utf-8') as f:
+        f.write(generate_text(filtered_puzzles, themes, min_rating, max_rating, n))
 
 if __name__ == "__main__":
     main()
