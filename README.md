@@ -4,6 +4,6 @@ Do you love to to practice your favorite chess puzzles offline and you don't wan
 
 How to use:
 1. Download puzzles from Lichess: https://database.lichess.org/#puzzles
-2. Run the code (adjust the config file to select only the themes of your interest and a valid elo range)
+2. Run the code (adjust the config file to select only themes of your interest, elo range, and max #puzzles)
 3. Use LaTeX compiler to generate pdf (e.g. www.overleaf.com)
 4. Go with the flow!
