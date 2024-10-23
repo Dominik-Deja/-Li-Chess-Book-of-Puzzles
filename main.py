@@ -9,6 +9,11 @@ def filter_puzzles(data, themes=None, all_themes=True, min_rating=None, max_rati
     """Filter puzzles based on themes and rating range."""
     # Convert Rating column to numeric
     data["Rating"] = pd.to_numeric(data["Rating"], errors='coerce')
+    # Filter by rating range
+    if min_rating:
+        data = data[data["Rating"] >= min_rating]
+    if max_rating:
+        data = data[data["Rating"] <= max_rating]
     # Filter by themes
     if themes:
         # Initialize the filter mask to select all rows initially
@@ -23,11 +28,6 @@ def filter_puzzles(data, themes=None, all_themes=True, min_rating=None, max_rati
                 filter_mask |= data["Themes"].str.contains(theme, na=False)
         # Apply the final filter
         data = data[filter_mask]
-    # Filter by rating range
-    if min_rating:
-        data = data[data["Rating"] >= min_rating]
-    if max_rating:
-        data = data[data["Rating"] <= max_rating]
     # Apply next move to FEN and get moves from the second move onwards
     for idx, row in data.iterrows():
         moves = row['Moves'].split()
